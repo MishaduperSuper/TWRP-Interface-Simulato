@@ -1,0 +1,5 @@
+{
+  "name": "TWRP Interface Simulator",
+  "description": "A realistic simulation of the Team Win Recovery Project (TWRP) interface, allowing users to experience installing spare parts (ZIP files) and wiping data in a safe, web-based environment.",
+  "requestFramePermissions": []
+}
