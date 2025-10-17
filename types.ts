@@ -8,4 +8,5 @@ export enum Screen {
     BackupError,
     Mount,
     Settings,
+    Terminal,
 }

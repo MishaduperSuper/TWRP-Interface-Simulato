@@ -214,9 +214,18 @@ const generateMountLogs = (operations: { partition: string; mount: boolean }[]):
 const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps }) => {
     const [logs, setLogs] = useState<string[]>(['Initiating process...']);
     const [isComplete, setIsComplete] = useState(false);
+    const [cliOutput, setCliOutput] = useState<string[]>([]);
+    const [inputValue, setInputValue] = useState('');
     const terminalRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        if (!actionType) {
+            setLogs([]);
+            setIsComplete(true);
+            return;
+        }
+
         let logLines: string[];
         if (actionType === 'install' && fileName) {
             logLines = generateInstallLogs(fileName);
@@ -247,13 +256,82 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
         if (terminalRef.current) {
             terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
         }
-    }, [logs]);
+    }, [logs, cliOutput]);
+    
+    useEffect(() => {
+        if (isComplete) {
+            inputRef.current?.focus();
+        }
+    }, [isComplete]);
+
+    const executeCommand = (command: string): string[] => {
+        const [cmd, ...args] = command.trim().split(' ');
+        
+        switch (cmd) {
+            case 'help':
+                return [
+                    'Available commands:',
+                    '  help          - Show this help message',
+                    '  ls /sdcard    - List contents of internal storage',
+                    '  date          - Display the current date and time',
+                    '  echo [text]   - Print text to the terminal',
+                    '  clear         - Clear the command output',
+                    '  reboot        - Reboot the system',
+                    '  exit          - Go back to the main menu',
+                ];
+            case 'ls':
+                if (args[0] === '/sdcard') {
+                    return [
+                        'drwx------   - root     root             2024-05-21 10:30 DCIM',
+                        'drwx------   - root     root             2024-05-20 15:01 Download',
+                        '-rw-------   - root     root     1.2G    2024-05-18 09:00 RiverOS_Performance_Mod_v2.1.zip',
+                        '-rw-------   - root     root     850M    2024-05-17 11:45 Universal_GApps_Suite_lite.zip',
+                    ];
+                }
+                return [`ls: ${args[0] || '.'}: No such file or directory`];
+            case 'date':
+                return [new Date().toString()];
+            case 'echo':
+                return [args.join(' ')];
+            case 'reboot':
+                onReboot();
+                return ['Rebooting system...'];
+            case 'exit':
+                onComplete();
+                return ['Exiting terminal...'];
+            case 'clear':
+                setCliOutput([]);
+                return [];
+            case '':
+                return [];
+            default:
+                return [`sh: ${cmd}: command not found`];
+        }
+    }
+
+    const handleCommand = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!inputValue.trim()) return;
+
+        const command = inputValue;
+        const output = executeCommand(command);
+        
+        setCliOutput(prev => [
+            ...prev,
+            `~ # ${command}`,
+            ...output
+        ]);
+
+        setInputValue('');
+    };
+
 
     const getTitle = () => {
         if (actionType === 'install') return `Installing: ${fileName}`;
         if (actionType === 'wipe') return 'Wiping Data';
         if (actionType === 'advanced-wipe') return 'Advanced Wipe';
         if (actionType === 'mount') return 'Mounting Partitions';
+        if (!actionType) return 'Terminal';
         return 'Processing';
     }
 
@@ -262,14 +340,34 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             <h2 className="text-lg font-bold p-3 bg-gray-900 border-b-2 border-[var(--accent-medium)] text-center flex-shrink-0">
                 {getTitle()}
             </h2>
-            <div ref={terminalRef} className="flex-grow p-2 overflow-y-auto font-mono text-sm">
+            <div ref={terminalRef} className="flex-grow p-2 overflow-y-auto font-mono text-sm" onClick={() => inputRef.current?.focus()}>
                 {logs.map((log, index) => {
                     const isError = log.includes('[ERROR]');
                     const isSuccess = log.toLowerCase().includes('successfully') || log.toLowerCase().includes('succeeded');
                     const color = isError ? 'text-red-500' : isSuccess ? 'text-[var(--accent-primary)]' : 'text-green-400';
                     return <p key={index} className={`whitespace-pre-wrap ${color}`}>{log}</p>
                 })}
-                {isComplete && <p className="text-[var(--accent-primary)] font-bold mt-2">Process completed.</p>}
+                {isComplete && actionType && <p className="text-[var(--accent-primary)] font-bold mt-2">Process completed.</p>}
+                 {cliOutput.map((line, index) => {
+                    const isPrompt = line.startsWith('~ #');
+                    const color = isPrompt ? 'text-cyan-400' : 'text-green-400';
+                     return <p key={`cli-${index}`} className={`whitespace-pre-wrap ${color}`}>{line}</p>
+                })}
+
+                {isComplete && (
+                    <form onSubmit={handleCommand} className="flex items-center">
+                        <span className="text-cyan-400 mr-2">~ #</span>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className="flex-1 bg-transparent border-none text-green-400 focus:outline-none font-mono"
+                            autoComplete="off"
+                            spellCheck="false"
+                        />
+                    </form>
+                )}
             </div>
             {isComplete && (
                 <div className="p-4 flex-shrink-0 flex items-center gap-4">

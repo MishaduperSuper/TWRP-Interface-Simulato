@@ -92,6 +92,7 @@ const App: React.FC = () => {
            case Screen.Wipe:
            case Screen.Mount:
            case Screen.Settings:
+           case Screen.Terminal:
                goHome();
                break;
            case Screen.ConfirmInstall:
@@ -157,6 +158,14 @@ const App: React.FC = () => {
                 return <MountScreen onConfirm={handleConfirmMount} />;
             case Screen.Settings:
                 return <SettingsScreen currentTheme={theme} onThemeChange={setTheme} />;
+            case Screen.Terminal:
+                 return (
+                    <TerminalView
+                        actionType={null}
+                        onComplete={goHome}
+                        onReboot={handleReboot}
+                    />
+                );
             case Screen.ConfirmInstall:
                 return (
                     <ActionScreen
@@ -203,7 +212,7 @@ const App: React.FC = () => {
             <main className="flex-grow flex flex-col overflow-y-auto">
                 {renderScreen()}
             </main>
-            {currentScreen !== Screen.Processing && (
+            {currentScreen !== Screen.Processing && currentScreen !== Screen.Terminal && (
                 <footer className="flex-shrink-0 bg-gray-900 flex justify-around items-center h-16 border-t border-gray-700">
                     <button onClick={goBack} className="p-4" aria-label="Go Back">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
