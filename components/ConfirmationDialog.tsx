@@ -19,7 +19,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ isOpen, title, 
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
             <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 w-full max-w-sm animate-fade-in-up">
                 <div className="p-4 border-b border-gray-700">
-                    <h3 id="dialog-title" className="text-lg font-bold text-cyan-400">{title}</h3>
+                    <h3 id="dialog-title" className="text-lg font-bold text-[var(--accent-primary)]">{title}</h3>
                 </div>
                 <div className="p-4 text-gray-300">
                     {message}
@@ -33,7 +33,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ isOpen, title, 
                     </button>
                     <button
                         onClick={onConfirm}
-                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="px-4 py-2 bg-[var(--accent-dark)] hover:bg-[var(--accent-hover)] text-white font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent-medium)]"
                     >
                         {confirmText}
                     </button>

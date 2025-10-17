@@ -30,7 +30,7 @@ const Header: React.FC = () => {
         const width = `${level}%`;
         return (
             <div className="w-6 h-3 border border-gray-400 rounded-sm flex items-center p-0.5 relative">
-                <div className="h-full bg-cyan-400 rounded-sm" style={{ width }}></div>
+                <div className="h-full bg-[var(--accent-primary)] rounded-sm" style={{ width }}></div>
                 <div className="w-1 h-2 bg-gray-400 absolute -right-1 top-1/2 -translate-y-1/2 rounded-r-sm"></div>
             </div>
         );
@@ -38,7 +38,7 @@ const Header: React.FC = () => {
 
     return (
         <header className="flex-shrink-0 bg-gray-900 p-2 flex justify-between items-center text-sm text-gray-300 border-b border-gray-700">
-            <div className="font-bold text-cyan-400">Team Win Recovery Project</div>
+            <div className="font-bold text-[var(--accent-primary)]">Team Win Recovery Project</div>
             <div className="flex items-center space-x-2">
                 <span>{formatTime(time)}</span>
                 <BatteryIcon level={battery} />

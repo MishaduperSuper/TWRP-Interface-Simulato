@@ -67,11 +67,11 @@ const Slider: React.FC<SliderProps> = ({ text, onConfirm }) => {
     return (
         <div
             ref={containerRef}
-            className="w-full bg-gray-900/70 rounded-full h-14 relative flex items-center justify-center overflow-hidden border-2 border-cyan-800"
+            className="w-full bg-gray-900/70 rounded-full h-14 relative flex items-center justify-center overflow-hidden border-2 border-[var(--accent-border)]"
         >
             <div
                 ref={sliderRef}
-                className="w-16 h-16 bg-cyan-500 rounded-full absolute -top-1 left-0 flex items-center justify-center cursor-pointer select-none z-10"
+                className="w-16 h-16 bg-[var(--accent-medium)] rounded-full absolute -top-1 left-0 flex items-center justify-center cursor-pointer select-none z-10"
                 style={{ transform: `translateX(${sliderX}px)` }}
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}

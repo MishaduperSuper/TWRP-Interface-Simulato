@@ -24,7 +24,7 @@ const ErrorScreen: React.FC<ErrorScreenProps> = ({ onGoHome }) => {
 
             <button
                 onClick={onGoHome}
-                className="w-full max-w-sm mt-8 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-lg transition-colors"
+                className="w-full max-w-sm mt-8 py-3 bg-[var(--accent-dark)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg transition-colors"
             >
                 Reboot to Recovery
             </button>

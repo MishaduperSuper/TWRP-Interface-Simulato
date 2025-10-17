@@ -259,17 +259,17 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
 
     return (
         <div className="flex flex-col h-full bg-[#0d1117]">
-            <h2 className="text-lg font-bold p-3 bg-gray-900 border-b-2 border-cyan-500 text-center flex-shrink-0">
+            <h2 className="text-lg font-bold p-3 bg-gray-900 border-b-2 border-[var(--accent-medium)] text-center flex-shrink-0">
                 {getTitle()}
             </h2>
             <div ref={terminalRef} className="flex-grow p-2 overflow-y-auto font-mono text-sm">
                 {logs.map((log, index) => {
                     const isError = log.includes('[ERROR]');
                     const isSuccess = log.toLowerCase().includes('successfully') || log.toLowerCase().includes('succeeded');
-                    const color = isError ? 'text-red-500' : isSuccess ? 'text-cyan-400' : 'text-green-400';
+                    const color = isError ? 'text-red-500' : isSuccess ? 'text-[var(--accent-primary)]' : 'text-green-400';
                     return <p key={index} className={`whitespace-pre-wrap ${color}`}>{log}</p>
                 })}
-                {isComplete && <p className="text-cyan-400 font-bold mt-2">Process completed.</p>}
+                {isComplete && <p className="text-[var(--accent-primary)] font-bold mt-2">Process completed.</p>}
             </div>
             {isComplete && (
                 <div className="p-4 flex-shrink-0 flex items-center gap-4">
@@ -281,7 +281,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                     </button>
                     <button
                         onClick={onReboot}
-                        className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-lg transition-colors"
+                        className="w-full py-3 bg-[var(--accent-dark)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg transition-colors"
                     >
                         Reboot System
                     </button>

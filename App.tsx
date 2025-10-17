@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Screen } from './types';
+import { Theme, themes } from './themes';
 import Header from './components/Header';
 import HomeScreen from './components/HomeScreen';
 import InstallScreen from './components/InstallScreen';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
     const [mountOps, setMountOps] = useState<{ partition: string; mount: boolean }[]>([]);
     const [isRebooting, setIsRebooting] = useState(false);
     const [isConfirming, setIsConfirming] = useState<null | 'wipe' | 'advanced-wipe'>(null);
+    const [theme, setTheme] = useState<Theme>(themes.cyan);
 
     const navigateTo = (screen: Screen) => {
         setCurrentScreen(screen);
@@ -125,7 +127,7 @@ const App: React.FC = () => {
                     message={
                         <>
                             <p className="mb-2">You are about to wipe the following:</p>
-                            <ul className="list-disc list-inside my-2 text-cyan-300 bg-gray-900 p-2 rounded-md">
+                            <ul className="list-disc list-inside my-2 text-[var(--accent-primary)] bg-gray-900 p-2 rounded-md">
                                 {partitionsToWipe.map(p => <li key={p}>{p}</li>)}
                             </ul>
                             <p className="mt-2 font-bold text-yellow-400">This action cannot be undone.</p>
@@ -154,7 +156,7 @@ const App: React.FC = () => {
             case Screen.Mount:
                 return <MountScreen onConfirm={handleConfirmMount} />;
             case Screen.Settings:
-                return <SettingsScreen />;
+                return <SettingsScreen currentTheme={theme} onThemeChange={setTheme} />;
             case Screen.ConfirmInstall:
                 return (
                     <ActionScreen
@@ -182,9 +184,19 @@ const App: React.FC = () => {
                 return <HomeScreen onNavigate={navigateTo} />;
         }
     };
+    
+    const appStyle = {
+        '--accent-primary': theme.primary,
+        '--accent-medium': theme.medium,
+        '--accent-dark': theme.dark,
+        '--accent-hover': theme.hover,
+        '--accent-border': theme.border,
+        '--accent-interactive': theme.interactive,
+    } as React.CSSProperties;
+
 
     return (
-        <div className="h-screen w-screen bg-black flex flex-col font-sans max-w-md mx-auto border-2 border-gray-700 shadow-2xl relative">
+        <div className="h-screen w-screen bg-black flex flex-col font-sans max-w-md mx-auto border-2 border-gray-700 shadow-2xl relative" style={appStyle}>
             {isRebooting && <RebootScreen onComplete={handleRebootComplete} />}
             {renderConfirmationDialog()}
             <Header />
@@ -194,12 +206,12 @@ const App: React.FC = () => {
             {currentScreen !== Screen.Processing && (
                 <footer className="flex-shrink-0 bg-gray-900 flex justify-around items-center h-16 border-t border-gray-700">
                     <button onClick={goBack} className="p-4" aria-label="Go Back">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
                        </svg>
                     </button>
                     <button onClick={goHome} className="p-4" aria-label="Go Home">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                     </button>
