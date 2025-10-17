@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Screen } from './types';
 import { Theme, themes } from './themes';
+import { SPARE_PARTS } from './constants';
 import Header from './components/Header';
 import HomeScreen from './components/HomeScreen';
 import InstallScreen from './components/InstallScreen';
@@ -13,6 +14,17 @@ import MountScreen from './components/MountScreen';
 import SettingsScreen from './components/SettingsScreen';
 import RebootScreen from './components/RebootScreen';
 import ConfirmationDialog from './components/ConfirmationDialog';
+import FileManagerScreen from './components/FileManagerScreen';
+
+const initialFilesystem = {
+    'system': { 'app': {}, 'bin': {}, 'build.prop': null },
+    'system-root': { 'init.rc': null },
+    'sdcard': {
+        'DCIM': {},
+        'Download': {},
+        ...SPARE_PARTS.reduce((acc, part) => ({ ...acc, [part]: null }), {}),
+    },
+};
 
 const App: React.FC = () => {
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Home);
@@ -24,6 +36,15 @@ const App: React.FC = () => {
     const [isConfirming, setIsConfirming] = useState<null | 'wipe' | 'advanced-wipe'>(null);
     const [theme, setTheme] = useState<Theme>(themes.cyan);
 
+    // Simulation Settings
+    const [installErrorChance, setInstallErrorChance] = useState(0);
+    const [verifyZip, setVerifyZip] = useState(true);
+    const [autoReboot, setAutoReboot] = useState(true);
+    const [createBackup, setCreateBackup] = useState(false);
+
+    // Global Filesystem State
+    const [filesystem, setFilesystem] = useState(initialFilesystem);
+
     const navigateTo = (screen: Screen) => {
         setCurrentScreen(screen);
     };
@@ -33,7 +54,10 @@ const App: React.FC = () => {
         navigateTo(Screen.ConfirmInstall);
     };
     
-    const handleConfirmInstall = useCallback((backup: boolean) => {
+    const handleConfirmInstall = useCallback((options: { backup: boolean, verify: boolean, reboot: boolean }) => {
+        setCreateBackup(options.backup);
+        setVerifyZip(options.verify);
+        setAutoReboot(options.reboot);
         setActionType('install');
         navigateTo(Screen.Processing);
     }, []);
@@ -93,6 +117,7 @@ const App: React.FC = () => {
            case Screen.Mount:
            case Screen.Settings:
            case Screen.Terminal:
+           case Screen.FileManager:
                goHome();
                break;
            case Screen.ConfirmInstall:
@@ -105,6 +130,16 @@ const App: React.FC = () => {
                goHome();
        }
     }, [currentScreen, goHome]);
+
+    const handleDownloadFile = (fileName: string) => {
+        setFilesystem(prevFs => {
+            const newFs = JSON.parse(JSON.stringify(prevFs));
+            if (!newFs.sdcard[fileName]) {
+                newFs.sdcard[fileName] = null;
+            }
+            return newFs;
+        });
+    };
 
     const renderConfirmationDialog = () => {
         if (isConfirming === 'wipe') {
@@ -149,7 +184,9 @@ const App: React.FC = () => {
             case Screen.Home:
                 return <HomeScreen onNavigate={navigateTo} />;
             case Screen.Install:
-                return <InstallScreen onSelectZip={handleSelectZip} />;
+                return <InstallScreen onSelectZip={handleSelectZip} filesystem={filesystem} />;
+            case Screen.FileManager:
+                return <FileManagerScreen filesystem={filesystem} onDownloadFile={handleDownloadFile} />;
             case Screen.Wipe:
                 return <WipeScreen onWipe={() => setIsConfirming('wipe')} onAdvancedWipe={() => navigateTo(Screen.AdvancedWipeSelection)} />;
             case Screen.AdvancedWipeSelection:
@@ -157,13 +194,20 @@ const App: React.FC = () => {
             case Screen.Mount:
                 return <MountScreen onConfirm={handleConfirmMount} />;
             case Screen.Settings:
-                return <SettingsScreen currentTheme={theme} onThemeChange={setTheme} />;
+                return <SettingsScreen 
+                            currentTheme={theme} 
+                            onThemeChange={setTheme} 
+                            errorChance={installErrorChance}
+                            onSetErrorChance={setInstallErrorChance}
+                        />;
             case Screen.Terminal:
                  return (
                     <TerminalView
                         actionType={null}
                         onComplete={goHome}
                         onReboot={handleReboot}
+                        filesystem={filesystem}
+                        setFilesystem={setFilesystem}
                     />
                 );
             case Screen.ConfirmInstall:
@@ -175,6 +219,7 @@ const App: React.FC = () => {
                         onConfirm={handleConfirmInstall}
                         actionType="install"
                     />
+
                 );
             case Screen.Processing:
                  return (
@@ -185,6 +230,14 @@ const App: React.FC = () => {
                         mountOps={actionType === 'mount' ? mountOps : undefined}
                         onComplete={handleActionComplete}
                         onReboot={handleReboot}
+                        filesystem={filesystem}
+                        setFilesystem={setFilesystem}
+                        installOptions={{
+                            errorChance: installErrorChance,
+                            verifyZip: verifyZip,
+                            autoReboot: autoReboot,
+                            createBackup: createBackup
+                        }}
                     />
                 );
             case Screen.BackupError:

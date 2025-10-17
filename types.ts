@@ -9,4 +9,5 @@ export enum Screen {
     Mount,
     Settings,
     Terminal,
+    FileManager,
 }

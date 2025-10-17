@@ -7,51 +7,63 @@ interface TerminalViewProps {
     onReboot: () => void;
     partitions?: string[];
     mountOps?: { partition: string; mount: boolean }[];
+    filesystem: any;
+    setFilesystem: (fs: any) => void;
+    installOptions?: {
+        errorChance: number;
+        verifyZip: boolean;
+        autoReboot: boolean;
+        createBackup: boolean;
+    }
 }
 
-const initialFilesystem = {
-    'system': {
-        'app': {
-            'Browser.apk': null,
-            'Camera.apk': null,
-        },
-        'bin': {
-            'sh': null,
-            'toolbox': null,
-        },
-        'build.prop': null,
-    },
-    'system-root': {
-        'init.rc': null,
-    },
-    'sdcard': {
-        'DCIM': {},
-        'Download': {},
-        'RiverOS_Performance_Mod_v2.1.zip': null,
-        'Universal_GApps_Suite_lite.zip': null,
-        'Helios_Custom_Kernel_r5-stable.zip': null,
-    },
+const generateInstallLogs = (fileName: string, options: TerminalViewProps['installOptions']): { logs: string[], success: boolean } => {
+    let logs: string[] = [];
+    const { errorChance = 0, verifyZip = true } = options || {};
+    
+    logs.push(`Finding update package...`);
+    logs.push(`Opening update package...`);
+
+    if (verifyZip) {
+        logs.push(`Verifying update package...`);
+        logs.push(`Signature verified.`);
+    } else {
+        logs.push(`Skipping zip signature verification.`);
+    }
+
+    // Simulate potential failure
+    if (Math.random() < errorChance) {
+        const errorType = Math.random() > 0.5 ? 'Status 7' : 'Corrupt';
+        if (errorType === 'Status 7') {
+             logs.push(`[ERROR] This package is for device: 'river', 'bayside'; this device is 'simulator'.`);
+             logs.push(`[ERROR] Updater process ended with ERROR: 7`);
+             logs.push(`Installation aborted.`);
+        } else {
+            logs.push(`[ERROR] Failed to read footer from /sdcard/${fileName}`);
+            logs.push(`[ERROR] Zip is corrupt.`);
+            logs.push(`Installation aborted.`);
+        }
+        return { logs, success: false };
+    }
+
+    logs = [
+        ...logs,
+        `Installing update...`,
+        `script succeeded: result was [/system]`,
+        `Patching system image unconditionally...`,
+        `Verified '/system' partition...`,
+        `Installing '${fileName}'...`,
+        `Mounting partitions...`,
+        `Checking for digest file...`,
+        `Skipping digest check: no digest file found.`,
+        `Unzipping...`,
+        `Running edify script...`,
+        `Cleaning up...`,
+        `Unmounting partitions...`,
+        `Done.`,
+    ];
+    return { logs, success: true };
 };
-
-
-const generateInstallLogs = (fileName: string): string[] => [
-    `Finding update package...`,
-    `Opening update package...`,
-    `Verifying update package...`,
-    `Installing update...`,
-    `script succeeded: result was [/system]`,
-    `Patching system image unconditionally...`,
-    `Verified '/system' partition...`,
-    `Installing '${fileName}'...`,
-    `Mounting partitions...`,
-    `Checking for digest file...`,
-    `Skipping digest check: no digest file found.`,
-    `Unzipping...`,
-    `Running edify script...`,
-    `Cleaning up...`,
-    `Unmounting partitions...`,
-    `Done.`,
-];
 
 const generateWipeLogs = (): string[] => [
     `Wiping data...`,
@@ -236,12 +248,11 @@ const generateMountLogs = (operations: { partition: string; mount: boolean }[]):
     return logs;
 };
 
-const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps }) => {
+const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps, filesystem, setFilesystem, installOptions }) => {
     const [logs, setLogs] = useState<string[]>(['Initiating process...']);
     const [isComplete, setIsComplete] = useState(false);
     const [cliOutput, setCliOutput] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const [filesystem, setFilesystem] = useState(initialFilesystem);
     const terminalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -252,9 +263,13 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             return;
         }
 
-        let logLines: string[];
+        let logLines: string[] = [];
+        let success = true;
+
         if (actionType === 'install' && fileName) {
-            logLines = generateInstallLogs(fileName);
+            const result = generateInstallLogs(fileName, installOptions);
+            logLines = result.logs;
+            success = result.success;
         } else if (actionType === 'advanced-wipe' && partitions) {
             logLines = generateDynamicAdvancedWipeLogs(partitions);
         } else if (actionType === 'mount' && mountOps) {
@@ -271,12 +286,16 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                 i++;
             } else {
                 clearInterval(intervalId);
-                setIsComplete(true);
+                if (success && actionType === 'install' && installOptions?.autoReboot) {
+                    onReboot();
+                } else {
+                    setIsComplete(true);
+                }
             }
         }, 350 + Math.random() * 200);
 
         return () => clearInterval(intervalId);
-    }, [actionType, fileName, partitions, mountOps]);
+    }, [actionType, fileName, partitions, mountOps, installOptions, onReboot]);
 
     useEffect(() => {
         if (terminalRef.current) {
@@ -296,13 +315,11 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
     
         let current = fs;
         let parent = null;
-        let currentPath = '/';
     
         for (let i = 0; i < parts.length - 1; i++) {
             const part = parts[i];
             if (current && typeof current === 'object' && current[part] !== undefined) {
                 current = current[part];
-                currentPath += `${part}/`;
             } else {
                 return { parent: null, name: part, node: null, exists: false };
             }

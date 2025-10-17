@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { SPARE_PARTS } from '../constants';
 
 interface InstallScreenProps {
     onSelectZip: (zipName: string) => void;
+    filesystem: any;
 }
 
 const ZipIcon = () => (
@@ -13,24 +13,33 @@ const ZipIcon = () => (
 );
 
 
-const InstallScreen: React.FC<InstallScreenProps> = ({ onSelectZip }) => {
+const InstallScreen: React.FC<InstallScreenProps> = ({ onSelectZip, filesystem }) => {
+    const zipFiles = Object.keys(filesystem.sdcard || {}).filter(file => file.endsWith('.zip'));
+
     return (
         <div className="p-2 flex-grow flex flex-col">
-            <h2 className="text-xl font-bold p-3 border-b-2 border-[var(--accent-medium)] mb-2">Select ZIP to Install</h2>
+            <h2 className="text-xl font-bold p-3 border-b-2 border-[var(--accent-medium)] mb-2">Select ZIP to Install from /sdcard</h2>
             <div className="flex-grow overflow-y-auto">
-                <ul>
-                    {SPARE_PARTS.map((part) => (
-                        <li key={part}>
-                            <button
-                                onClick={() => onSelectZip(part)}
-                                className="w-full text-left p-3 flex items-center bg-gray-800 hover:bg-[var(--accent-interactive)] my-1 rounded-md transition-colors"
-                            >
-                               <ZipIcon />
-                               <span className="truncate">{part}</span>
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                {zipFiles.length > 0 ? (
+                    <ul>
+                        {zipFiles.map((part) => (
+                            <li key={part}>
+                                <button
+                                    onClick={() => onSelectZip(part)}
+                                    className="w-full text-left p-3 flex items-center bg-gray-800 hover:bg-[var(--accent-interactive)] my-1 rounded-md transition-colors"
+                                >
+                                <ZipIcon />
+                                <span className="truncate">{part}</span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="p-4 text-center text-gray-400">
+                        <p>No .zip files found on /sdcard.</p>
+                        <p className="mt-2 text-sm">Use the File Manager to download packages.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
