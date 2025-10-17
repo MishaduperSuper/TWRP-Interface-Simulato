@@ -9,6 +9,31 @@ interface TerminalViewProps {
     mountOps?: { partition: string; mount: boolean }[];
 }
 
+const initialFilesystem = {
+    'system': {
+        'app': {
+            'Browser.apk': null,
+            'Camera.apk': null,
+        },
+        'bin': {
+            'sh': null,
+            'toolbox': null,
+        },
+        'build.prop': null,
+    },
+    'system-root': {
+        'init.rc': null,
+    },
+    'sdcard': {
+        'DCIM': {},
+        'Download': {},
+        'RiverOS_Performance_Mod_v2.1.zip': null,
+        'Universal_GApps_Suite_lite.zip': null,
+        'Helios_Custom_Kernel_r5-stable.zip': null,
+    },
+};
+
+
 const generateInstallLogs = (fileName: string): string[] => [
     `Finding update package...`,
     `Opening update package...`,
@@ -216,6 +241,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
     const [isComplete, setIsComplete] = useState(false);
     const [cliOutput, setCliOutput] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState('');
+    const [filesystem, setFilesystem] = useState(initialFilesystem);
     const terminalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -264,31 +290,118 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
         }
     }, [isComplete]);
 
-    const executeCommand = (command: string): string[] => {
-        const [cmd, ...args] = command.trim().split(' ');
+    const resolvePath = (path: string, fs: any) => {
+        const parts = path.split('/').filter(p => p);
+        if (path === '/') return { parent: null, name: '/', node: fs, exists: true };
+    
+        let current = fs;
+        let parent = null;
+        let currentPath = '/';
+    
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i];
+            if (current && typeof current === 'object' && current[part] !== undefined) {
+                current = current[part];
+                currentPath += `${part}/`;
+            } else {
+                return { parent: null, name: part, node: null, exists: false };
+            }
+        }
         
+        parent = current;
+        const name = parts[parts.length - 1];
+        const node = parent ? parent[name] : null;
+
+        return { parent, name, node, exists: node !== undefined };
+    };
+
+    const executeCommand = (command: string): string[] => {
+        const [cmd, ...args] = command.trim().split(' ').filter(Boolean);
+        const newFs = JSON.parse(JSON.stringify(filesystem));
+
         switch (cmd) {
             case 'help':
                 return [
                     'Available commands:',
-                    '  help          - Show this help message',
-                    '  ls /sdcard    - List contents of internal storage',
-                    '  date          - Display the current date and time',
-                    '  echo [text]   - Print text to the terminal',
-                    '  clear         - Clear the command output',
-                    '  reboot        - Reboot the system',
-                    '  exit          - Go back to the main menu',
+                    '  help                   - Show this help message',
+                    '  ls [path]              - List directory contents (e.g., /sdcard)',
+                    '  mkdir <path>           - Create a new directory',
+                    '  rm [-r] <file/dir>     - Remove a file or directory (-r for recursive)',
+                    '  mv <source> <dest>     - Move or rename a file/directory',
+                    '  date                   - Display the current date and time',
+                    '  echo [text]            - Print text to the terminal',
+                    '  clear                  - Clear the command output',
+                    '  reboot                 - Reboot the system',
+                    '  exit                   - Go back to the main menu',
                 ];
-            case 'ls':
-                if (args[0] === '/sdcard') {
-                    return [
-                        'drwx------   - root     root             2024-05-21 10:30 DCIM',
-                        'drwx------   - root     root             2024-05-20 15:01 Download',
-                        '-rw-------   - root     root     1.2G    2024-05-18 09:00 RiverOS_Performance_Mod_v2.1.zip',
-                        '-rw-------   - root     root     850M    2024-05-17 11:45 Universal_GApps_Suite_lite.zip',
-                    ];
+            case 'ls': {
+                const path = args[0] || '/';
+                const resolved = resolvePath(path, filesystem);
+                if (!resolved.exists) return [`ls: ${path}: No such file or directory`];
+                if (typeof resolved.node !== 'object' || resolved.node === null) return [path.split('/').pop() || ''];
+                
+                const contents = Object.keys(resolved.node).sort();
+                return contents.map(item => {
+                    return (resolved.node[item] && typeof resolved.node[item] === 'object') ? `${item}/` : item;
+                });
+            }
+            case 'mkdir': {
+                if (!args[0]) return ['mkdir: missing operand'];
+                const path = args[0];
+                const resolved = resolvePath(path, newFs);
+                if (resolved.exists) return [`mkdir: ${path}: File exists`];
+                if (!resolved.parent || typeof resolved.parent !== 'object') return [`mkdir: ${path}: No such file or directory`];
+                
+                resolved.parent[resolved.name] = {};
+                setFilesystem(newFs);
+                return [];
+            }
+            case 'rm': {
+                const recursive = args.includes('-r');
+                const path = args.find(a => !a.startsWith('-'));
+                if (!path) return ['rm: missing operand'];
+
+                const resolved = resolvePath(path, newFs);
+                if (!resolved.exists) return [`rm: ${path}: No such file or directory`];
+                if (!resolved.parent) return [`rm: cannot remove '${path}': Permission denied`];
+                if (typeof resolved.node === 'object' && resolved.node !== null && !recursive) {
+                    return [`rm: ${path}: is a directory`];
                 }
-                return [`ls: ${args[0] || '.'}: No such file or directory`];
+
+                delete resolved.parent[resolved.name];
+                setFilesystem(newFs);
+                return [];
+            }
+            case 'mv': {
+                if (args.length < 2) return ['mv: missing destination file operand after \'' + args[0] + '\''];
+                const srcPath = args[0];
+                const destPath = args[1];
+
+                const src = resolvePath(srcPath, newFs);
+                if (!src.exists) return [`mv: ${srcPath}: No such file or directory`];
+                if (!src.parent) return [`mv: cannot move '${srcPath}': Permission denied`];
+
+                const dest = resolvePath(destPath, newFs);
+                let destParent = dest.parent;
+                let destName = dest.name;
+
+                // If destination is an existing directory, move source inside it
+                if (dest.exists && typeof dest.node === 'object' && dest.node !== null) {
+                    destParent = dest.node;
+                    destName = src.name;
+                } else if (!dest.exists && !dest.parent) {
+                    return [`mv: ${destPath}: No such file or directory`];
+                }
+                
+                if (destParent[destName] !== undefined) {
+                     return [`mv: ${destPath}: File exists`];
+                }
+                
+                destParent[destName] = src.node; // Move/rename
+                delete src.parent[src.name];   // Delete original
+                setFilesystem(newFs);
+                return [];
+            }
             case 'date':
                 return [new Date().toString()];
             case 'echo':
@@ -350,7 +463,8 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                 {isComplete && actionType && <p className="text-[var(--accent-primary)] font-bold mt-2">Process completed.</p>}
                  {cliOutput.map((line, index) => {
                     const isPrompt = line.startsWith('~ #');
-                    const color = isPrompt ? 'text-cyan-400' : 'text-green-400';
+                    const isDir = line.endsWith('/');
+                    const color = isPrompt ? 'text-cyan-400' : isDir ? 'text-blue-400' : 'text-green-400';
                      return <p key={`cli-${index}`} className={`whitespace-pre-wrap ${color}`}>{line}</p>
                 })}
 
