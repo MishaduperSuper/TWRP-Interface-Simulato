@@ -1,14 +1,16 @@
 import React from 'react';
 import { Theme, themes } from '../themes';
+import { Screen } from '../types';
 
 interface SettingsScreenProps {
     currentTheme: Theme;
     onThemeChange: (theme: Theme) => void;
     errorChance: number;
     onSetErrorChance: (chance: number) => void;
+    onNavigate: (screen: Screen) => void;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeChange, errorChance, onSetErrorChance }) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeChange, errorChance, onSetErrorChance, onNavigate }) => {
     const errorChances = [
         { label: '0%', value: 0 },
         { label: '10%', value: 0.1 },
@@ -71,6 +73,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeCh
                     <p className="text-xs text-gray-500 mt-2">Set the probability of a simulated failure during ZIP installation.</p>
                 </div>
 
+                <div className="border-t border-gray-700 my-6"></div>
+
+                 <h3 className="text-lg font-semibold text-gray-300 mb-3">Advanced</h3>
+                 <div className="bg-gray-800 p-4 rounded-lg">
+                    <button
+                        onClick={() => onNavigate(Screen.Magisk)}
+                        className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                    >
+                        Magisk Manager
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">Manage simulated root access and patch boot images.</p>
+                 </div>
             </div>
         </div>
     );
