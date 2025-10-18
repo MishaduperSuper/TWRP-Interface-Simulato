@@ -15,4 +15,5 @@ export enum Screen {
     Magisk,
     ConfirmImageFlash,
     Odin,
+    EraseFRP,
 }

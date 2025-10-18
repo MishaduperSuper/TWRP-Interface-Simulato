@@ -21,6 +21,7 @@ import MagiskScreen from './components/MagiskScreen';
 import ConfirmImageFlashScreen from './components/ConfirmImageFlashScreen';
 import HardBrickScreen from './components/HardBrickScreen';
 import OdinScreen from './components/OdinScreen';
+import EraseFrpScreen from './components/EraseFrpScreen';
 
 const initialFilesystem = {
     'system': { 'app': {}, 'bin': {}, 'build.prop': null },
@@ -36,7 +37,7 @@ const initialFilesystem = {
 const App: React.FC = () => {
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Home);
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
-    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | null>(null);
+    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | null>(null);
     const [partitionsToWipe, setPartitionsToWipe] = useState<string[]>([]);
     const [partitionsToBackup, setPartitionsToBackup] = useState<string[]>([]);
     const [mountOps, setMountOps] = useState<{ partition: string; mount: boolean }[]>([]);
@@ -135,6 +136,11 @@ const App: React.FC = () => {
         setActionType('odin-flash');
         navigateTo(Screen.Processing);
     }, []);
+
+    const handleConfirmEraseFrp = useCallback(() => {
+        setActionType('erase-frp');
+        navigateTo(Screen.Processing);
+    }, []);
     
     const handleReboot = useCallback(() => {
         setIsRebooting(true);
@@ -230,6 +236,7 @@ const App: React.FC = () => {
                goHome();
                break;
             case Screen.Magisk:
+            case Screen.EraseFRP:
                 navigateTo(Screen.Settings);
                 break;
            case Screen.ConfirmInstall:
@@ -346,6 +353,8 @@ const App: React.FC = () => {
                 return <MagiskScreen onConfirmPatch={handleConfirmMagiskPatch} />;
             case Screen.Odin:
                 return <OdinScreen onConfirm={handleConfirmOdinFlash} />;
+            case Screen.EraseFRP:
+                return <EraseFrpScreen onConfirm={handleConfirmEraseFrp} />;
             case Screen.Terminal:
                  return (
                     <TerminalView

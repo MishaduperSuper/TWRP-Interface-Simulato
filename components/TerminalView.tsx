@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import InstallErrorHelp from './InstallErrorHelp';
 
 interface TerminalViewProps {
-    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | null;
+    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | null;
     fileName?: string | null;
     onComplete: (success: boolean) => void;
     onReboot: () => void;
@@ -564,6 +564,80 @@ const generateMagiskPatchLogs = (): { logs: string[], success: boolean } => {
     return { logs, success: true };
 };
 
+const generateEraseFrpLogs = (): { logs: string[], success: boolean } => {
+    const logs: string[] = [
+        `*********************************`,
+        `*      TWRP FRP Erase Tool      *`,
+        `*         Version 1.2.5         *`,
+        `*********************************`,
+        `[INFO] Reading device identifiers...`,
+        `[INFO]   - Serial: SM-G998B-SIMULATED`,
+        `[INFO]   - Board: exynos2100`,
+        `[INFO]   - Bootloader: G998BXXU1AUB6`,
+        `[INFO] Checking for FRP lock status...`,
+        `[INFO] Partition '/dev/block/persistent' exists.`,
+        `[INFO] Reading FRP status... LOCKED.`,
+        `[WARN] This is an advanced operation. Do not disconnect the device.`,
+        `[STEP 1/5] Entering diagnostic mode...`,
+        `[INFO] Sending ADB command: 'reboot-bootloader'`,
+        `...`,
+        `[INFO] Device entered bootloader.`,
+        `[INFO] Switching to RCM mode via payload injection...`,
+        `[INFO] Payload sent successfully.`,
+        `[STEP 2/5] Establishing connection with remote server...`,
+        `[INFO] Pinging frp.twrp.simulated.net...`,
+        `[INFO] Ping successful (34ms).`,
+        `[INFO] Authenticating with API key...`,
+        `[INFO] Authentication successful. Session ID: 8a4f9c2b`,
+        `[STEP 3/5] Uploading device signature for token generation...`,
+        `[INFO] Signature size: 4KB`,
+        `[INFO] Uploading... 10%`,
+        `[INFO] Uploading... 30%`,
+        `[INFO] Uploading... 75%`,
+        `[INFO] Uploading... 100%`,
+        `[INFO] Signature uploaded. Awaiting server-side processing.`,
+        `[INFO] This may take several minutes.`,
+        `[SERVER] Received signature. Verifying against known models.`,
+        `[SERVER] Match found: Samsung S21 (exynos2100).`,
+        `[SERVER] Generating unique unlock token...`,
+        `[SERVER] Applying cryptographic signature to token...`,
+        `[SERVER] Token generation successful. Sending back to client.`,
+        `[INFO] Received unlock token (256 bytes).`,
+        `[INFO] Verifying token signature... OK.`,
+        `[STEP 4/5] Preparing to flash unlock token...`,
+        `[INFO] Mounting 'persistent' partition as read-write...`,
+        `[WARN] This is a critical step. Any failure may result in a brick.`,
+        `[INFO] Mount successful.`,
+        `[INFO] Backing up original FRP data to /tmp/frp.bak...`,
+        `[INFO] Backup complete.`,
+        `[INFO] Writing unlock token to block 0x00A1 of /dev/block/persistent...`,
+        `...`,
+        `...`,
+        `[INFO] Write operation successful.`,
+        `[INFO] Verifying write...`,
+        `[INFO] Readback matches token. Verification OK.`,
+        `[STEP 5/5] Finalizing and cleaning up...`,
+        `[INFO] Unmounting 'persistent' partition...`,
+        `[INFO] Deleting temporary files...`,
+        `[INFO] Sending ADB command: 'reboot'`,
+        `[INFO] Device is rebooting.`,
+        `[SUCCESS] FRP Erase process completed successfully!`,
+        `[SUCCESS] The device should now be unlocked on next boot.`,
+    ];
+
+    // 10% chance of a "server-side" failure for variety
+    if (Math.random() < 0.1) {
+        const failureLogs = logs.slice(0, 25); // Cut before token is received
+        failureLogs.push(`[SERVER] [ERROR] Token generation failed. Server load too high.`);
+        failureLogs.push(`[SERVER] Please try again in a few hours.`);
+        failureLogs.push(`[ERROR] Failed to receive unlock token from server.`);
+        failureLogs.push(`[FAIL] FRP Erase process failed.`);
+        return { logs: failureLogs, success: false };
+    }
+
+    return { logs, success: true };
+};
+
 const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, filesystem, setFilesystem, installOptions }) => {
     const [logs, setLogs] = useState<string[]>(['Initiating process...']);
     const [isComplete, setIsComplete] = useState(false);
@@ -583,6 +657,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
 
         let logLines: string[] = [];
         let success = true;
+        let intervalDuration = 350 + Math.random() * 200;
 
         if (actionType === 'install' && fileName) {
             const result = generateInstallLogs(fileName, installOptions);
@@ -621,14 +696,18 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             const result = generateOdinLogs(odinFiles);
             logLines = result.logs;
             success = result.success;
+        } else if (actionType === 'erase-frp') {
+            const result = generateEraseFrpLogs();
+            logLines = result.logs;
+            success = result.success;
+            // Make this process very long as requested
+            intervalDuration = 90000 / logLines.length; // ~90 seconds total
         }
         else {
             logLines = generateWipeLogs();
             success = true;
         }
 
-        let i = 0;
-        let intervalDuration = 350 + Math.random() * 200;
         if (actionType === 'magisk-patch') {
              // Make the process last about 60 seconds
             intervalDuration = 60000 / logLines.length;
@@ -651,6 +730,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             }
         }, intervalDuration);
 
+        let i = 0;
         return () => clearInterval(intervalId);
     }, [actionType, fileName, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, installOptions, onReboot, onComplete]);
 
@@ -830,6 +910,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
         if (actionType === 'mount') return 'Mounting Partitions';
         if (actionType === 'change-fs') return 'File System Operation';
         if (actionType === 'magisk-patch') return 'Patching Boot Image';
+        if (actionType === 'erase-frp') return 'Erasing FRP Lock';
         if (actionType === 'corrupt-partitions') return 'Corrupting Partitions';
         if (!actionType) return 'Terminal';
         return 'Processing';
@@ -851,7 +932,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                     const isError = log.includes('[ERROR]');
                     const isWarning = log.includes('[WARNING]');
                     const isFatal = log.includes('[FATAL]');
-                    const isSuccess = log.toLowerCase().includes('successfully') || log.toLowerCase().includes('succeeded') || log.toLowerCase().includes('! ');
+                    const isSuccess = log.toLowerCase().includes('successfully') || log.toLowerCase().includes('succeeded') || log.toLowerCase().includes('! ') || log.toLowerCase().includes('[success]');
                     const color = isFatal ? 'text-red-600 font-bold' : isError ? 'text-red-500' : isWarning ? 'text-yellow-400' : isSuccess ? 'text-[var(--accent-primary)]' : 'text-green-400';
                     return <p key={index} className={`whitespace-pre-wrap ${color}`}>{log}</p>
                 })}

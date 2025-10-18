@@ -76,14 +76,25 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeCh
                 <div className="border-t border-gray-700 my-6"></div>
 
                  <h3 className="text-lg font-semibold text-gray-300 mb-3">Advanced</h3>
-                 <div className="bg-gray-800 p-4 rounded-lg">
-                    <button
-                        onClick={() => onNavigate(Screen.Magisk)}
-                        className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
-                    >
-                        Magisk Manager
-                    </button>
-                    <p className="text-xs text-gray-500 mt-2">Manage simulated root access and patch boot images.</p>
+                 <div className="bg-gray-800 p-4 rounded-lg space-y-2">
+                    <div>
+                        <button
+                            onClick={() => onNavigate(Screen.Magisk)}
+                            className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                        >
+                            Magisk Manager
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2">Manage simulated root access and patch boot images.</p>
+                    </div>
+                    <div>
+                        <button
+                            onClick={() => onNavigate(Screen.EraseFRP)}
+                            className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                        >
+                            Erase FRP Lock
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2">Simulate removing Google Factory Reset Protection lock. This process is very long.</p>
+                    </div>
                  </div>
             </div>
         </div>
