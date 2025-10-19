@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import InstallErrorHelp from './InstallErrorHelp';
 
 interface TerminalViewProps {
-    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | null;
+    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | 'debloat-realme' | 'unlock-bootloader' | 'bypass-icloud' | 'stock-firmware-flash' | null;
     fileName?: string | null;
     onComplete: (success: boolean) => void;
     onReboot: () => void;
@@ -11,6 +11,8 @@ interface TerminalViewProps {
     fsChangeOptions?: { partition: string; fsType?: string; repair: boolean; forceError: boolean };
     targetPartition?: string;
     odinFiles?: { [key: string]: string };
+    unlockBrand?: string;
+    firmwareBrand?: string;
     filesystem: any;
     setFilesystem: (fs: any) => void;
     installOptions?: {
@@ -192,7 +194,7 @@ const generateBackupLogs = (partitions: string[]): { logs: string[], success: bo
     
     const logs: string[] = [
         `Creating backup...`,
-        `Backup folder: /sdcard/TWRP/BACKUPS/${backupFolderName}`
+        `Backup folder: /sdcard/DemonTOOL/BACKUPS/${backupFolderName}`
     ];
     let errors = 0;
 
@@ -567,7 +569,7 @@ const generateMagiskPatchLogs = (): { logs: string[], success: boolean } => {
 const generateEraseFrpLogs = (): { logs: string[], success: boolean } => {
     const logs: string[] = [
         `*********************************`,
-        `*      TWRP FRP Erase Tool      *`,
+        `*    DemonTOOL FRP Erase Tool   *`,
         `*         Version 1.2.5         *`,
         `*********************************`,
         `[INFO] Reading device identifiers...`,
@@ -585,7 +587,7 @@ const generateEraseFrpLogs = (): { logs: string[], success: boolean } => {
         `[INFO] Switching to RCM mode via payload injection...`,
         `[INFO] Payload sent successfully.`,
         `[STEP 2/5] Establishing connection with remote server...`,
-        `[INFO] Pinging frp.twrp.simulated.net...`,
+        `[INFO] Pinging frp.demontool.sim...`,
         `[INFO] Ping successful (34ms).`,
         `[INFO] Authenticating with API key...`,
         `[INFO] Authentication successful. Session ID: 8a4f9c2b`,
@@ -641,7 +643,7 @@ const generateEraseFrpLogs = (): { logs: string[], success: boolean } => {
 const generateBypassLduLogs = (): { logs: string[], success: boolean } => {
     const logs: string[] = [
         `*********************************`,
-        `*   TWRP LDU Bypass Utility     *`,
+        `*  DemonTOOL LDU Bypass Utility *`,
         `*         Version 2.1.0         *`,
         `*********************************`,
         `[INFO] Establishing ADB connection...`,
@@ -687,7 +689,302 @@ const generateBypassLduLogs = (): { logs: string[], success: boolean } => {
     return { logs, success: true };
 };
 
-const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, filesystem, setFilesystem, installOptions }) => {
+const generateDebloatRealmeLogs = (): { logs: string[], success: boolean } => {
+    const bloatware = [
+        { name: "Heytap Browser", pkg: "com.heytap.browser" },
+        { name: "Smart Assistant", pkg: "com.coloros.assistantscreen" },
+        { name: "App Market", pkg: "com.heytap.market" },
+        { name: "Realme Store", pkg: "com.realmestore.app" },
+        { name: "OPPO Push Service", pkg: "com.opos.cs" },
+        { name: "Heytap Cloud", pkg: "com.heytap.cloud" },
+        { name: "ORoaming", pkg: "com.redteamobile.roaming" },
+        { name: "FinShell Pay", pkg: "com.finshell.fin" },
+        { name: "YouTube Music", pkg: "com.google.android.apps.youtube.music.p" },
+        { name: "Google TV", pkg: "com.google.android.videos" },
+        { name: "Facebook", pkg: "com.facebook.katana" },
+        { name: "Facebook App Manager", pkg: "com.facebook.appmanager" },
+    ];
+    
+    const logs: string[] = [
+        `*********************************`,
+        `*  DemonTOOL Realme Debloat Tool*`,
+        `*         Version 1.0.0         *`,
+        `*********************************`,
+        `[INFO] Connecting via ADB...`,
+        `[INFO] Device detected: RMX3363 (Realme GT Master Edition)`,
+        `[INFO] Starting debloat process for user 0...`,
+    ];
+
+    bloatware.forEach((app, index) => {
+        const useDisable = Math.random() > 0.5; // Randomly choose disable or uninstall
+        const command = useDisable ? `pm disable-user --user 0 ${app.pkg}` : `pm uninstall -k --user 0 ${app.pkg}`;
+        const result = useDisable ? `Package ${app.pkg} new state: disabled` : 'Success';
+
+        logs.push(`---`);
+        logs.push(`[STEP ${index + 1}/${bloatware.length}] Removing ${app.name}...`);
+        logs.push(`[SHELL] ${command}`);
+        if (Math.random() < 0.05) { // 5% chance of failure
+            logs.push(`[SHELL] Failure [INSTALL_FAILED_USER_RESTRICTED]`);
+            logs.push(`[WARN] Failed to remove ${app.name}, it might be a critical system app.`);
+        } else {
+            logs.push(`[SHELL] ${result}`);
+        }
+    });
+
+    logs.push(`---`);
+    logs.push(`[SUCCESS] Debloat process completed. Processed ${bloatware.length} packages.`);
+    logs.push(`[SUCCESS] A reboot is recommended to clear cache and apply all changes.`);
+
+    return { logs, success: true };
+};
+
+const generateUnlockBootloaderLogs = (brand: string): { logs: string[], success: boolean } => {
+    let logs: string[] = [
+        `*********************************`,
+        `* DemonTOOL Bootloader Unlocker *`,
+        `*       Target: ${brand.padEnd(16)} *`,
+        `*********************************`,
+    ];
+    let success = true;
+
+    switch (brand) {
+        case 'Xiaomi':
+            logs.push(...[
+                `[INFO] Device detected in fastboot mode.`,
+                `[INFO] Rebooting to Emergency Download (EDL) mode...`,
+                `[SHELL] fastboot oem edl`,
+                `[INFO] Device connected in Qualcomm HS-USB QDLoader 9008 mode.`,
+                `[INFO] Identifying chipset: SM8350 (Snapdragon 888).`,
+                `[INFO] Loading Firehose programmer: prog_firehose_ddr.elf...`,
+                `[WARN] Bypassing programmer signature verification via CVE-2021-30333 exploit...`,
+                `[SUCCESS] Programmer authenticated.`,
+                `[INFO] Sending payload to read RPMB partition...`,
+                `[INFO] Extracting unlock token from encrypted data block...`,
+                `[INFO] Token found: 3A5F8C1E9B2D7A4F`,
+                `[INFO] Rebooting to fastboot mode...`,
+                `[SHELL] fastboot flashing unlock_critical`,
+                `[OUTPUT] ... OKAY`,
+                `[SHELL] fastboot oem unlock 3A5F8C1E9B2D7A4F`,
+                `[OUTPUT] ...`,
+                `[OUTPUT] OKEY [ 0.050s]`,
+                `[OUTPUT] finished. total time: 0.050s`,
+                `[SUCCESS] Bootloader is now UNLOCKED.`,
+                `[WARN] Device data has been wiped.`,
+            ]);
+            break;
+        case 'Samsung':
+            logs.push(...[
+                `[INFO] Device Model: SM-G998B (Exynos 2100).`,
+                `[INFO] Reading Knox Guard status... Active.`,
+                `[INFO] Reading CROM Service status... Locked.`,
+                `[WARN] This procedure will trip the Knox fuse (0x0 -> 0x1).`,
+                `[STEP 1/3] Disabling Knox services via memory exploit...`,
+                `[INFO] Injecting payload into RIL service...`,
+                `[SUCCESS] Knox services disabled in memory.`,
+                `[STEP 2/3] Generating unlock token via server...`,
+                `[INFO] Uploading device unique ID to DemonTOOL server...`,
+                `[SERVER] Generating unlock blob for device... OK.`,
+                `[INFO] Received unlock blob (unlock.bin).`,
+                `[STEP 3/3] Flashing unlock blob to 'param' partition...`,
+                `[INFO] Rebooting to Download Mode...`,
+                `[ODIN] Flashing unlock.bin to PARAM...`,
+                `[ODIN] PASS!`,
+                `[SUCCESS] Bootloader is now UNLOCKED.`,
+                `[WARN] Device data has been wiped.`,
+            ]);
+            break;
+        case 'Huawei / Honor':
+            logs.push(...[
+                `[INFO] Device detected: HMA-L29 (Kirin 980).`,
+                `[WARN] This procedure requires a Test Point connection.`,
+                `[INFO] Assuming device is in USB COM 1.0 mode (Test Point).`,
+                `[STEP 1/4] Bypassing boot ROM signature check...`,
+                `[INFO] Loading custom bootloader: usbloader-kirin980.bin`,
+                `[SUCCESS] Handshake with device successful.`,
+                `[STEP 2/4] Reading oeminfo partition...`,
+                `[INFO] Oeminfo backup saved to /logs/oeminfo.bin`,
+                `[STEP 3/4] Patching oeminfo with unlock flag...`,
+                `[INFO] Setting bootloader unlock status to 'unlocked' at offset 0x8A.`,
+                `[INFO] Recalculating checksum... OK.`,
+                `[STEP 4/4] Writing patched oeminfo back to device...`,
+                `[INFO] Writing...`,
+                `[INFO] Verification... OK.`,
+                `[INFO] Rebooting device...`,
+                `[SUCCESS] Bootloader is now UNLOCKED.`,
+                `[WARN] Device data has been wiped.`,
+            ]);
+            break;
+        case 'MediaTek Universal':
+             logs.push(...[
+                `[INFO] Attempting universal MediaTek unlock...`,
+                `[INFO] Chipset detected: Dimensity 1200.`,
+                `[STEP 1/3] Bypassing Secure Boot (BROM exploit)...`,
+                `[INFO] Shorting Test Point and connecting USB...`,
+                `[INFO] Device connected in BROM mode.`,
+                `[INFO] Executing MediaTek Auth Bypass utility v3.1...`,
+                `[SUCCESS] Authentication protection disabled.`,
+                `[STEP 2/3] Loading custom Download Agent (DA)...`,
+                `[INFO] Sending custom DA file: DA_SWSEC_CRYPTO.bin...`,
+                `[SUCCESS] DA loaded. Gaining control over eMMC.`,
+                `[STEP 3/3] Disabling lock flags in 'seccfg' partition...`,
+                `[INFO] Reading 'seccfg' partition...`,
+                `[INFO] Setting flash_lock_state to 0.`,
+                `[INFO] Setting unlock_status to 1.`,
+                `[INFO] Writing modified partition back to device...`,
+                `[SUCCESS] Bootloader is now UNLOCKED.`,
+                `[WARN] Device data has been wiped.`,
+            ]);
+            break;
+        default:
+            logs.push('[ERROR] Unknown brand selected. Aborting.');
+            success = false;
+    }
+    return { logs, success };
+};
+
+const generateBypassICloudLogs = (): { logs: string[], success: boolean } => {
+    const logs = [
+        `*********************************`,
+        `*   DemonTOOL iCloud Bypass Tool  *`,
+        `*     Target: Apple A11 Bionic    *`,
+        `*********************************`,
+        `[INFO] Waiting for device in DFU mode...`,
+        `[INFO] Apple Mobile Device (DFU Mode) connected!`,
+        `[DAEMON] DemonTOOL iTunes Daemon v1.1 engaged.`,
+        `[STEP 1/7] Executing checkm8 exploit...`,
+        `[INFO] Found vulnerable device with APNonce mismatch.`,
+        `[INFO] Heap overflow initiated...`,
+        `[INFO] Overwriting USB DFU request buffer...`,
+        `[INFO] Payload sent.`,
+        `[SUCCESS] Device is now in a pwned DFU state.`,
+        `[STEP 2/7] Sending patched iBSS...`,
+        `[INFO] Decompressing iBSS...`,
+        `[INFO] Applying signature patches...`,
+        `[INFO] Re-compressing and sending to device...`,
+        `[INFO] Booting patched iBSS... OK.`,
+        `[STEP 3/7] Sending patched iBEC...`,
+        `[INFO] Applying boot-args '-v rd=md0 amfi_get_out_of_my_way=1'...`,
+        `[INFO] Sending to device... OK.`,
+        `[STEP 4/7] Booting into verbose mode...`,
+        `[DEVICE] Apple logo displayed...`,
+        `[DEVICE] Booting kernel...`,
+        `[DEVICE] ...`,
+        `[DEVICE] ...`,
+        `[DEVICE] Successfully booted Ramdisk.`,
+        `[STEP 5/7] Establishing SSH over USB...`,
+        `[INFO] Forwarding port 22 to 2222...`,
+        `[INFO] Connection established.`,
+        `[SSH] root@localhost:~#`,
+        `[STEP 6/7] Modifying filesystem for bypass...`,
+        `[SSH] mount -o rw /`,
+        `[INFO] Root filesystem mounted as read-write.`,
+        `[SSH] mv /Applications/Setup.app /Applications/Setup.app.bak`,
+        `[INFO] Renamed Setup.app to prevent activation screen.`,
+        `[SSH] touch /var/root/Library/Lockdown/activation_records/COUNTRY_DONT_ALLOW`,
+        `[INFO] Created dummy activation records.`,
+        `[SSH] uicache -a`,
+        `[INFO] Rebuilding icon cache...`,
+        `[SSH] kill 1`,
+        `[INFO] Restarting SpringBoard...`,
+        `[STEP 7/7] Finalizing and rebooting...`,
+        `[INFO] Connection closed. Sending reboot command.`,
+        `[SUCCESS] iCloud Bypass complete! Device will boot to home screen.`,
+    ];
+    return { logs, success: true };
+};
+
+const generateStockFirmwareLogs = (brand: string): { logs: string[], success: boolean } => {
+    let logs: string[] = [
+        `*********************************`,
+        `* DemonTOOL Stock Firmware Flash*`,
+        `*         Target: ${brand.padEnd(16)} *`,
+        `*********************************`,
+    ];
+    let success = true;
+
+    switch (brand) {
+        case 'Samsung':
+            logs.push(...[
+                `[INFO] Using Odin protocol for Samsung device.`,
+                `[INFO] File: HOME_CSC_OXM_S918BOXM1AWBD_...tar.md5`,
+                `<ID:0/005> Odin engine v(ID:3.1401)..`,
+                `<ID:0/005> File analysis..`,
+                `<ID:0/005> Total file size: 8.2 GB`,
+                `<ID:0/005> SetupConnection..`,
+                `<ID:0/005> Initialzation..`,
+                `<ID:0/005> Get PIT for mapping..`,
+                `<ID:0/005> Firmware update start..`,
+                `<ID:0/005> SingleDownloadFile: boot.img...`,
+                `<ID:0/005> SingleDownloadFile: recovery.img...`,
+                `<ID:0/005> SingleDownloadFile: system.img... (chunk 1/10)`,
+                `<ID:0/005> SingleDownloadFile: system.img... (chunk 2/10)`,
+                `...`,
+                `<ID:0/005> SingleDownloadFile: system.img... (chunk 10/10)`,
+                `<ID:0/005> SingleDownloadFile: vendor.img...`,
+                `<ID:0/005> SingleDownloadFile: userdata.img...`,
+                `<ID:0/005> SingleDownloadFile: modem.bin...`,
+                `<ID:0/005> RQT_CLOSE !!`,
+                `<ID:0/005> RES OK !!`,
+                `<OSM> All threads completed. (succeed 1 / failed 0)`,
+                `[SUCCESS] Stock firmware flashed successfully.`,
+                `[INFO] Device will reboot to setup wizard.`,
+            ]);
+            break;
+        case 'Xiaomi':
+            logs.push(...[
+                `[INFO] Using Fastboot protocol for Xiaomi device (MiFlash).`,
+                `[INFO] Device detected in fastboot mode.`,
+                `[SHELL] fastboot getvar product`,
+                `[OUTPUT] product: apollo`,
+                `[INFO] Flashing images for 'apollo'...`,
+                `[SHELL] fastboot flash boot boot.img`,
+                `[OUTPUT] Sending 'boot' (128 MB)... OKAY`,
+                `[OUTPUT] Writing 'boot'... OKAY`,
+                `[SHELL] fastboot flash system system.img`,
+                `[OUTPUT] Sending sparse 'system' 1/5 (1024 MB)... OKAY`,
+                `[OUTPUT] Writing 'system' 1/5... OKAY`,
+                `...`,
+                `[OUTPUT] Sending sparse 'system' 5/5 (512 MB)... OKAY`,
+                `[OUTPUT] Writing 'system' 5/5... OKAY`,
+                `[SHELL] fastboot flash vendor vendor.img`,
+                `[OUTPUT] Sending 'vendor' (768 MB)... OKAY`,
+                `[OUTPUT] Writing 'vendor'... OKAY`,
+                `[SHELL] fastboot erase userdata`,
+                `[OUTPUT] Erasing 'userdata'... OKAY`,
+                `[SHELL] fastboot reboot`,
+                `[SUCCESS] Stock firmware flashed successfully.`,
+                `[INFO] Device rebooting...`,
+            ]);
+            break;
+        case 'Asus':
+            logs.push(...[
+                `[INFO] Using ADB Sideload for Asus device.`,
+                `[INFO] Device detected in recovery mode.`,
+                `[INFO] Starting ADB sideload...`,
+                `[SHELL] adb sideload UL-ASUS_I005D-WW-31.0810.1226.91-1.1.25.zip`,
+                `[OUTPUT] serving: 'UL-ASUS_I005D-...' (~47%)`,
+                `[DEVICE] Verifying update package...`,
+                `[DEVICE] Installing update...`,
+                `[DEVICE] Step 1/2`,
+                `[DEVICE] ...`,
+                `[DEVICE] Step 2/2`,
+                `[DEVICE] ...`,
+                `[DEVICE] Script succeeded: result was [/system]`,
+                `[OUTPUT] Total xfer: 1.00x`,
+                `[SUCCESS] Stock firmware flashed successfully.`,
+                `[INFO] Install from ADB completed with status 0.`,
+            ]);
+            break;
+        default:
+            logs.push('[ERROR] Unknown brand selected for firmware flash. Aborting.');
+            success = false;
+    }
+
+    return { logs, success };
+};
+
+
+const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, unlockBrand, firmwareBrand, filesystem, setFilesystem, installOptions }) => {
     const [logs, setLogs] = useState<string[]>(['Initiating process...']);
     const [isComplete, setIsComplete] = useState(false);
     const [cliOutput, setCliOutput] = useState<string[]>([]);
@@ -756,6 +1053,26 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             logLines = result.logs;
             success = result.success;
             intervalDuration = 30000 / logLines.length; // ~30 seconds total
+        } else if (actionType === 'debloat-realme') {
+            const result = generateDebloatRealmeLogs();
+            logLines = result.logs;
+            success = result.success;
+            intervalDuration = 25000 / logLines.length; // ~25 seconds total
+        } else if (actionType === 'unlock-bootloader' && unlockBrand) {
+            const result = generateUnlockBootloaderLogs(unlockBrand);
+            logLines = result.logs;
+            success = result.success;
+            intervalDuration = 400;
+        } else if (actionType === 'bypass-icloud') {
+            const result = generateBypassICloudLogs();
+            logLines = result.logs;
+            success = result.success;
+            intervalDuration = 120000 / logLines.length; // ~2 minutes total
+        } else if (actionType === 'stock-firmware-flash' && firmwareBrand) {
+            const result = generateStockFirmwareLogs(firmwareBrand);
+            logLines = result.logs;
+            success = result.success;
+            intervalDuration = 60000 / logLines.length; // ~60 seconds total
         }
         else {
             logLines = generateWipeLogs();
@@ -775,7 +1092,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                 i++;
             } else {
                 clearInterval(intervalId);
-                if (success && (actionType === 'install' || actionType === 'odin-flash') && installOptions?.autoReboot) {
+                if (success && (actionType === 'install' || actionType === 'odin-flash' || actionType === 'stock-firmware-flash') && installOptions?.autoReboot) {
                     onReboot();
                 } else {
                     setIsComplete(true);
@@ -786,7 +1103,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
 
         let i = 0;
         return () => clearInterval(intervalId);
-    }, [actionType, fileName, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, installOptions, onReboot, onComplete]);
+    }, [actionType, fileName, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, unlockBrand, firmwareBrand, installOptions, onReboot, onComplete]);
 
     useEffect(() => {
         if (terminalRef.current) {
@@ -957,7 +1274,10 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
     const getTitle = () => {
         if (actionType === 'install') return `Installing: ${fileName}`;
         if (actionType === 'image-flash') return `Flashing Image: ${fileName}`;
-        if (actionType === 'odin-flash') return 'TWRP ODIN Flash';
+        if (actionType === 'odin-flash') return 'DemonTOOL ODIN Flash';
+        if (actionType === 'unlock-bootloader') return `Unlocking Bootloader: ${unlockBrand}`;
+        if (actionType === 'stock-firmware-flash') return `Flashing Stock Firmware: ${firmwareBrand}`;
+        if (actionType === 'bypass-icloud') return 'Bypassing iCloud Lock (Apple)';
         if (actionType === 'wipe') return 'Wiping Data';
         if (actionType === 'backup') return 'Creating Backup';
         if (actionType === 'advanced-wipe') return 'Advanced Wipe';
@@ -966,6 +1286,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
         if (actionType === 'magisk-patch') return 'Patching Boot Image';
         if (actionType === 'erase-frp') return 'Erasing FRP Lock';
         if (actionType === 'bypass-ldu') return 'Bypassing LDU Lock';
+        if (actionType === 'debloat-realme') return 'Debloating Realme Device';
         if (actionType === 'corrupt-partitions') return 'Corrupting Partitions';
         if (!actionType) return 'Terminal';
         return 'Processing';
@@ -985,7 +1306,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
                         return <p key={index} className={`whitespace-pre-wrap ${color}`}>{log}</p>;
                     }
                     const isError = log.includes('[ERROR]');
-                    const isWarning = log.includes('[WARNING]');
+                    const isWarning = log.includes('[WARN]');
                     const isFatal = log.includes('[FATAL]');
                     const isSuccess = log.toLowerCase().includes('successfully') || log.toLowerCase().includes('succeeded') || log.toLowerCase().includes('! ') || log.toLowerCase().includes('[success]');
                     const color = isFatal ? 'text-red-600 font-bold' : isError ? 'text-red-500' : isWarning ? 'text-yellow-400' : isSuccess ? 'text-[var(--accent-primary)]' : 'text-green-400';

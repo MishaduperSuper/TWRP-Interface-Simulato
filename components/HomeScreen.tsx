@@ -15,20 +15,27 @@ const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" v
 const TerminalIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>;
 const RebootIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5M4 4l5 5M20 20l-5-5" /></svg>;
 const OdinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" /></svg>;
+const UnlockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>;
+const StockFirmwareIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9.75v6.75m0 0l-3-3m3 3l3-3m-8.25 6a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>;
+
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     return (
         <div className="p-4 flex-grow">
-            <div className="grid grid-cols-3 grid-rows-3 gap-4 h-full">
+            <div className="grid grid-cols-4 grid-rows-3 gap-4 h-full">
                 <Button onClick={() => onNavigate(Screen.Install)} icon={<InstallIcon />} label="Install" />
                 <Button onClick={() => onNavigate(Screen.Wipe)} icon={<WipeIcon />} label="Wipe" />
                 <Button onClick={() => onNavigate(Screen.Backup)} icon={<BackupIcon />} label="Backup" />
+                <Button onClick={() => onNavigate(Screen.DownloadStockFirmware)} icon={<StockFirmwareIcon />} label="Stock Firmware" />
+                
+                <Button onClick={() => onNavigate(Screen.UnlockBootloader)} icon={<UnlockIcon />} label="Unlock BL" />
+                <Button onClick={() => onNavigate(Screen.Odin)} icon={<OdinIcon />} label="Demon ODIN" />
                 <Button onClick={() => onNavigate(Screen.FileManager)} icon={<FileManagerIcon />} label="File Manager" />
                 <Button onClick={() => onNavigate(Screen.Mount)} icon={<MountIcon />} label="Mount" />
-                <Button onClick={() => onNavigate(Screen.Settings)} icon={<SettingsIcon />} label="Settings" />
+
                 <Button onClick={() => onNavigate(Screen.Terminal)} icon={<TerminalIcon />} label="Terminal" />
                 <Button onClick={() => onNavigate(Screen.Reboot)} icon={<RebootIcon />} label="Reboot" />
-                <Button onClick={() => onNavigate(Screen.Odin)} icon={<OdinIcon />} label="TWRP ODIN" />
+                <Button onClick={() => onNavigate(Screen.Settings)} icon={<SettingsIcon />} label="Settings" />
             </div>
         </div>
     );

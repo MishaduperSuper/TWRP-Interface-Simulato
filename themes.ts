@@ -1,3 +1,4 @@
+
 export interface Theme {
     name: string;
     primary: string;    // for text, icons
@@ -9,8 +10,17 @@ export interface Theme {
 }
 
 export const themes: { [key: string]: Theme } = {
+    demonRed: {
+        name: 'Demon Red',
+        primary: '#f87171', // red-400
+        medium: '#ef4444', // red-500
+        dark: '#dc2626', // red-600
+        hover: '#b91c1c', // red-700
+        border: '#991b1b', // red-800
+        interactive: 'rgba(127, 29, 29, 0.5)', // red-900/50
+    },
     cyan: {
-        name: 'TWRP Cyan',
+        name: 'Demon Cyan',
         primary: '#22d3ee', // 400
         medium: '#06b6d4', // 500
         dark: '#0891b2', // 600

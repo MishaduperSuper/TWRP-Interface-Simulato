@@ -23,7 +23,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeCh
             <h2 className="text-xl font-bold p-3 border-b-2 border-[var(--accent-medium)] mb-2">Settings</h2>
             <div className="flex-grow p-4 overflow-y-auto">
                 <h3 className="text-lg font-semibold text-gray-300 mb-3">Accent Color</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-5 gap-4">
                     {Object.values(themes).map((theme) => {
                         const isSelected = theme.name === currentTheme.name;
                         return (
@@ -103,6 +103,24 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeCh
                             Bypass LDU Lock
                         </button>
                         <p className="text-xs text-gray-500 mt-2">Simulate removing Live Demo Unit (retail mode) restrictions.</p>
+                    </div>
+                     <div>
+                        <button
+                            onClick={() => onNavigate(Screen.DebloatRealme)}
+                            className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                        >
+                            Realme Game/App Debloat
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2">Simulate removing junk from games and apps on Realme devices.</p>
+                    </div>
+                    <div>
+                        <button
+                            onClick={() => onNavigate(Screen.Website)}
+                            className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                        >
+                            Official Website
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2">View program information, licenses, and available firmware.</p>
                     </div>
                  </div>
             </div>

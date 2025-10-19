@@ -23,6 +23,12 @@ import HardBrickScreen from './components/HardBrickScreen';
 import OdinScreen from './components/OdinScreen';
 import EraseFrpScreen from './components/EraseFrpScreen';
 import BypassLduScreen from './components/BypassLduScreen';
+import DebloatRealmeScreen from './components/DebloatRealmeScreen';
+import LoginScreen from './components/LoginScreen';
+import WebsiteScreen from './components/WebsiteScreen';
+import UnlockBootloaderScreen from './components/UnlockBootloaderScreen';
+import BypassIcloudScreen from './components/BypassIcloudScreen';
+import DownloadStockFirmwareScreen from './components/DownloadStockFirmwareScreen';
 
 const initialFilesystem = {
     'system': { 'app': {}, 'bin': {}, 'build.prop': null },
@@ -36,19 +42,22 @@ const initialFilesystem = {
 };
 
 const App: React.FC = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Home);
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
-    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | null>(null);
+    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | 'debloat-realme' | 'unlock-bootloader' | 'bypass-icloud' | 'stock-firmware-flash' | null>(null);
     const [partitionsToWipe, setPartitionsToWipe] = useState<string[]>([]);
     const [partitionsToBackup, setPartitionsToBackup] = useState<string[]>([]);
     const [mountOps, setMountOps] = useState<{ partition: string; mount: boolean }[]>([]);
     const [fsChangeOptions, setFsChangeOptions] = useState<{ partition: string; fsType?: string; repair: boolean; forceError: boolean } | null>(null);
     const [targetPartition, setTargetPartition] = useState<string | null>(null);
     const [odinFiles, setOdinFiles] = useState<{ [key: string]: string }>({});
+    const [unlockBrand, setUnlockBrand] = useState<string | null>(null);
+    const [firmwareBrand, setFirmwareBrand] = useState<string | null>(null);
     const [isRebooting, setIsRebooting] = useState(false);
     const [isHardBricked, setIsHardBricked] = useState(false);
     const [isConfirming, setIsConfirming] = useState<null | 'wipe' | 'advanced-wipe' | 'corrupt'>(null);
-    const [theme, setTheme] = useState<Theme>(themes.cyan);
+    const [theme, setTheme] = useState<Theme>(themes.demonRed);
 
     // Simulation Settings
     const [installErrorChance, setInstallErrorChance] = useState(0);
@@ -61,6 +70,14 @@ const App: React.FC = () => {
 
     const navigateTo = (screen: Screen) => {
         setCurrentScreen(screen);
+    };
+
+    const handleLogin = (user: string, pass: string): boolean => {
+        if (user === 'theprofgh' && pass === '1234') {
+            setIsAuthenticated(true);
+            return true;
+        }
+        return false;
     };
 
     const handleSelectFile = (fileName: string) => {
@@ -147,6 +164,28 @@ const App: React.FC = () => {
         setActionType('bypass-ldu');
         navigateTo(Screen.Processing);
     }, []);
+
+    const handleConfirmDebloatRealme = useCallback(() => {
+        setActionType('debloat-realme');
+        navigateTo(Screen.Processing);
+    }, []);
+
+    const handleConfirmUnlockBootloader = useCallback((brand: string) => {
+        setUnlockBrand(brand);
+        setActionType('unlock-bootloader');
+        navigateTo(Screen.Processing);
+    }, []);
+
+    const handleConfirmBypassICloud = useCallback(() => {
+        setActionType('bypass-icloud');
+        navigateTo(Screen.Processing);
+    }, []);
+
+    const handleConfirmStockFirmwareFlash = useCallback((brand: string) => {
+        setFirmwareBrand(brand);
+        setActionType('stock-firmware-flash');
+        navigateTo(Screen.Processing);
+    }, []);
     
     const handleReboot = useCallback(() => {
         setIsRebooting(true);
@@ -161,6 +200,8 @@ const App: React.FC = () => {
         setFsChangeOptions(null);
         setTargetPartition(null);
         setOdinFiles({});
+        setUnlockBrand(null);
+        setFirmwareBrand(null);
         navigateTo(Screen.Home);
     }, []);
 
@@ -174,10 +215,10 @@ const App: React.FC = () => {
             const newFs = JSON.parse(JSON.stringify(filesystem));
             let fsChanged = false;
 
-            if (actionType === 'install' || actionType === 'odin-flash') {
+            if (actionType === 'install' || actionType === 'odin-flash' || actionType === 'stock-firmware-flash') {
                 newFs.system = { 'app': {}, 'bin': {}, 'build.prop': 'from_zip' };
                 fsChanged = true;
-            } else if (actionType === 'wipe') { // Factory Reset
+            } else if (actionType === 'wipe' || actionType === 'unlock-bootloader') { // unlock also wipes
                  newFs.sdcard.Download = {};
                  newFs.sdcard.DCIM = {};
                  fsChanged = true;
@@ -196,16 +237,16 @@ const App: React.FC = () => {
                 const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
                 const backupName = `backup_${timestamp}`;
                 
-                if (!newFs.sdcard['TWRP']) {
-                    newFs.sdcard['TWRP'] = { 'BACKUPS': {} };
-                } else if (!newFs.sdcard['TWRP']['BACKUPS']) {
-                    newFs.sdcard['TWRP']['BACKUPS'] = {};
+                if (!newFs.sdcard['DemonTOOL']) {
+                    newFs.sdcard['DemonTOOL'] = { 'BACKUPS': {} };
+                } else if (!newFs.sdcard['DemonTOOL']['BACKUPS']) {
+                    newFs.sdcard['DemonTOOL']['BACKUPS'] = {};
                 }
                 
-                newFs.sdcard['TWRP']['BACKUPS'][backupName] = {};
+                newFs.sdcard['DemonTOOL']['BACKUPS'][backupName] = {};
                 partitionsToBackup.forEach(p => {
                     const safeName = p.replace(/\s+/g, '_');
-                    newFs.sdcard['TWRP']['BACKUPS'][backupName][`${safeName.toLowerCase()}.win`] = null;
+                    newFs.sdcard['DemonTOOL']['BACKUPS'][backupName][`${safeName.toLowerCase()}.win`] = null;
                 });
                 fsChanged = true;
             } else if (actionType === 'magisk-patch') {
@@ -239,12 +280,19 @@ const App: React.FC = () => {
            case Screen.Reboot:
            case Screen.ChangeFileSystem:
            case Screen.Odin:
+           case Screen.UnlockBootloader:
+           case Screen.DownloadStockFirmware:
                goHome();
                break;
             case Screen.Magisk:
             case Screen.EraseFRP:
             case Screen.BypassLDU:
+            case Screen.DebloatRealme:
+            case Screen.Website:
                 navigateTo(Screen.Settings);
+                break;
+            case Screen.BypassICloud:
+                navigateTo(Screen.UnlockBootloader);
                 break;
            case Screen.ConfirmInstall:
            case Screen.ConfirmImageFlash:
@@ -364,6 +412,16 @@ const App: React.FC = () => {
                 return <EraseFrpScreen onConfirm={handleConfirmEraseFrp} />;
             case Screen.BypassLDU:
                 return <BypassLduScreen onConfirm={handleConfirmBypassLdu} />;
+            case Screen.DebloatRealme:
+                return <DebloatRealmeScreen onConfirm={handleConfirmDebloatRealme} />;
+            case Screen.Website:
+                return <WebsiteScreen />;
+            case Screen.UnlockBootloader:
+                return <UnlockBootloaderScreen onConfirmUnlock={handleConfirmUnlockBootloader} onNavigate={navigateTo} />;
+            case Screen.BypassICloud:
+                return <BypassIcloudScreen onConfirm={handleConfirmBypassICloud} />;
+            case Screen.DownloadStockFirmware:
+                return <DownloadStockFirmwareScreen onConfirm={handleConfirmStockFirmwareFlash} />;
             case Screen.Terminal:
                  return (
                     <TerminalView
@@ -402,6 +460,8 @@ const App: React.FC = () => {
                         fsChangeOptions={actionType === 'change-fs' ? fsChangeOptions : undefined}
                         targetPartition={actionType === 'image-flash' ? targetPartition : undefined}
                         odinFiles={actionType === 'odin-flash' ? odinFiles : undefined}
+                        unlockBrand={actionType === 'unlock-bootloader' ? unlockBrand! : undefined}
+                        firmwareBrand={actionType === 'stock-firmware-flash' ? firmwareBrand! : undefined}
                         onComplete={handleActionComplete}
                         onReboot={handleReboot}
                         filesystem={filesystem}
@@ -433,26 +493,32 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="h-screen w-screen bg-black flex flex-col font-sans max-w-md mx-auto border-2 border-gray-700 shadow-2xl relative" style={appStyle}>
-            {isRebooting && <BootAnimation onComplete={handleRebootComplete} systemCorrupted={systemCorrupted} />}
-            {renderConfirmationDialog()}
-            <Header />
-            <main className="flex-grow flex flex-col overflow-y-auto">
-                {renderScreen()}
-            </main>
-            {currentScreen !== Screen.Processing && currentScreen !== Screen.Terminal && (
-                <footer className="flex-shrink-0 bg-gray-900 flex justify-around items-center h-16 border-t border-gray-700">
-                    <button onClick={goBack} className="p-4" aria-label="Go Back">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                       </svg>
-                    </button>
-                    <button onClick={goHome} className="p-4" aria-label="Go Home">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                    </button>
-                </footer>
+        <div className="h-screen w-screen bg-black flex flex-col font-sans relative" style={appStyle}>
+            {!isAuthenticated ? (
+                <LoginScreen onLogin={handleLogin} />
+            ) : (
+                <>
+                    {isRebooting && <BootAnimation onComplete={handleRebootComplete} systemCorrupted={systemCorrupted} />}
+                    {renderConfirmationDialog()}
+                    <Header />
+                    <main className="flex-grow flex flex-col overflow-y-auto">
+                        {renderScreen()}
+                    </main>
+                    {currentScreen !== Screen.Processing && currentScreen !== Screen.Terminal && (
+                        <footer className="flex-shrink-0 bg-gray-900 flex justify-around items-center h-16 border-t border-gray-700">
+                            <button onClick={goBack} className="p-4" aria-label="Go Back">
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                               </svg>
+                            </button>
+                            <button onClick={goHome} className="p-4" aria-label="Go Home">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                            </button>
+                        </footer>
+                    )}
+                </>
             )}
         </div>
     );

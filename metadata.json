@@ -1,5 +1,5 @@
 {
-  "name": "TWRP Interface Simulator",
-  "description": "A realistic simulation of the Team Win Recovery Project (TWRP) interface, allowing users to experience installing spare parts (ZIP files) and wiping data in a safe, web-based environment.",
+  "name": "DemonTOOL",
+  "description": "An advanced toolkit for device modification and repair. DemonTOOL provides a powerful simulated interface for flashing firmware, wiping data, and executing complex system-level tasks.",
   "requestFramePermissions": []
 }

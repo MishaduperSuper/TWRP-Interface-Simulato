@@ -17,4 +17,9 @@ export enum Screen {
     Odin,
     EraseFRP,
     BypassLDU,
+    DebloatRealme,
+    Website,
+    UnlockBootloader,
+    BypassICloud,
+    DownloadStockFirmware,
 }

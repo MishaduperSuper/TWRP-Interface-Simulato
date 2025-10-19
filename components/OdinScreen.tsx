@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 interface OdinScreenProps {
@@ -37,7 +38,7 @@ const OdinScreen: React.FC<OdinScreenProps> = ({ onConfirm }) => {
 
     return (
         <div className="p-2 flex-grow flex flex-col bg-gray-700">
-            <h2 className="text-xl font-bold p-3 border-b-2 border-[var(--accent-medium)] mb-2 text-center">TWRP ODIN v3.14.1</h2>
+            <h2 className="text-xl font-bold p-3 border-b-2 border-[var(--accent-medium)] mb-2 text-center">DemonTOOL ODIN v6.6.6</h2>
             <div className="flex-grow p-2 bg-gray-200 text-black font-sans flex flex-col text-sm">
                 <div className="flex gap-2 h-full">
                     {/* Left Panel */}

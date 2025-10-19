@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 const SignalIcon: React.FC = () => (
@@ -53,7 +54,7 @@ const Header: React.FC = () => {
 
     return (
         <header className="flex-shrink-0 bg-gray-900 p-2 flex justify-between items-center text-sm text-gray-300 border-b border-gray-700">
-            <div className="font-bold text-[var(--accent-primary)]">Team Win Recovery Project</div>
+            <div className="font-bold text-[var(--accent-primary)]">DemonTOOL</div>
             <div className="flex items-center space-x-2">
                 <SignalIcon />
                 <WifiIcon />
