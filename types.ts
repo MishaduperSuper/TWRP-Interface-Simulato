@@ -16,4 +16,5 @@ export enum Screen {
     ConfirmImageFlash,
     Odin,
     EraseFRP,
+    BypassLDU,
 }

@@ -22,6 +22,7 @@ import ConfirmImageFlashScreen from './components/ConfirmImageFlashScreen';
 import HardBrickScreen from './components/HardBrickScreen';
 import OdinScreen from './components/OdinScreen';
 import EraseFrpScreen from './components/EraseFrpScreen';
+import BypassLduScreen from './components/BypassLduScreen';
 
 const initialFilesystem = {
     'system': { 'app': {}, 'bin': {}, 'build.prop': null },
@@ -37,7 +38,7 @@ const initialFilesystem = {
 const App: React.FC = () => {
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Home);
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
-    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | null>(null);
+    const [actionType, setActionType] = useState<'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | null>(null);
     const [partitionsToWipe, setPartitionsToWipe] = useState<string[]>([]);
     const [partitionsToBackup, setPartitionsToBackup] = useState<string[]>([]);
     const [mountOps, setMountOps] = useState<{ partition: string; mount: boolean }[]>([]);
@@ -141,6 +142,11 @@ const App: React.FC = () => {
         setActionType('erase-frp');
         navigateTo(Screen.Processing);
     }, []);
+
+    const handleConfirmBypassLdu = useCallback(() => {
+        setActionType('bypass-ldu');
+        navigateTo(Screen.Processing);
+    }, []);
     
     const handleReboot = useCallback(() => {
         setIsRebooting(true);
@@ -237,6 +243,7 @@ const App: React.FC = () => {
                break;
             case Screen.Magisk:
             case Screen.EraseFRP:
+            case Screen.BypassLDU:
                 navigateTo(Screen.Settings);
                 break;
            case Screen.ConfirmInstall:
@@ -355,6 +362,8 @@ const App: React.FC = () => {
                 return <OdinScreen onConfirm={handleConfirmOdinFlash} />;
             case Screen.EraseFRP:
                 return <EraseFrpScreen onConfirm={handleConfirmEraseFrp} />;
+            case Screen.BypassLDU:
+                return <BypassLduScreen onConfirm={handleConfirmBypassLdu} />;
             case Screen.Terminal:
                  return (
                     <TerminalView

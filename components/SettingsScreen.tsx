@@ -95,6 +95,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ currentTheme, onThemeCh
                         </button>
                         <p className="text-xs text-gray-500 mt-2">Simulate removing Google Factory Reset Protection lock. This process is very long.</p>
                     </div>
+                     <div>
+                        <button
+                            onClick={() => onNavigate(Screen.BypassLDU)}
+                            className="w-full text-left p-3 bg-gray-900 hover:bg-gray-700 rounded-md transition-colors text-gray-200"
+                        >
+                            Bypass LDU Lock
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2">Simulate removing Live Demo Unit (retail mode) restrictions.</p>
+                    </div>
                  </div>
             </div>
         </div>

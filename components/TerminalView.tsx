@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import InstallErrorHelp from './InstallErrorHelp';
 
 interface TerminalViewProps {
-    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | null;
+    actionType: 'install' | 'wipe' | 'advanced-wipe' | 'mount' | 'backup' | 'change-fs' | 'magisk-patch' | 'image-flash' | 'corrupt-partitions' | 'odin-flash' | 'erase-frp' | 'bypass-ldu' | null;
     fileName?: string | null;
     onComplete: (success: boolean) => void;
     onReboot: () => void;
@@ -638,6 +638,55 @@ const generateEraseFrpLogs = (): { logs: string[], success: boolean } => {
     return { logs, success: true };
 };
 
+const generateBypassLduLogs = (): { logs: string[], success: boolean } => {
+    const logs: string[] = [
+        `*********************************`,
+        `*   TWRP LDU Bypass Utility     *`,
+        `*         Version 2.1.0         *`,
+        `*********************************`,
+        `[INFO] Establishing ADB connection...`,
+        `[INFO] ADB connection successful.`,
+        `[INFO] Device Model: SM-G998U1-LDU (Simulated)`,
+        `[INFO] Android Version: 13`,
+        `[INFO] Security Patch: 2023-05-01`,
+        `[INFO] Searching for LDU services...`,
+        `[INFO] Found service: com.samsung.retail`,
+        `[INFO] Found service: knox_lud_service`,
+        `[STEP 1/4] Disabling Knox Security for LDU...`,
+        `[SHELL] pm disable-user --user 0 com.samsung.android.knox.container`,
+        `[SHELL] Package com.samsung.android.knox.container new state: disabled`,
+        `[SUCCESS] Knox LDU service disabled.`,
+        `[STEP 2/4] Removing retail mode packages...`,
+        `[SHELL] pm uninstall -k --user 0 com.samsung.retail`,
+        `[SHELL] Success`,
+        `[SHELL] pm uninstall -k --user 0 com.sec.android.app.retailmode`,
+        `[SHELL] Success`,
+        `[SUCCESS] Retail packages removed.`,
+        `[STEP 3/4] Modifying system properties...`,
+        `[WARN] This requires a temporary read-write mount of /system.`,
+        `[SHELL] mount -o rw,remount /`,
+        `[INFO] Remount successful.`,
+        `[SHELL] setprop persist.sys.retaildemo.enabled 0`,
+        `[INFO] Property 'persist.sys.retaildemo.enabled' set to '0'.`,
+        `[SHELL] setprop sys.retail.demo.enabled 0`,
+        `[INFO] Property 'sys.retail.demo.enabled' set to '0'.`,
+        `[SHELL] setprop ro.frp.pst ""`,
+        `[INFO] FRP status flag cleared.`,
+        `[SHELL] mount -o ro,remount /`,
+        `[INFO] Remounted /system as read-only.`,
+        `[SUCCESS] System properties modified.`,
+        `[STEP 4/4] Cleaning up demo content...`,
+        `[INFO] Deleting /sdcard/Retail/ folder...`,
+        `[INFO] Deleted 1.2 GB of demo videos and images.`,
+        `[INFO] Deleting demo user accounts...`,
+        `[INFO] Cleanup complete.`,
+        `[SUCCESS] LDU Bypass process completed successfully!`,
+        `[SUCCESS] Please reboot the device to apply all changes.`,
+    ];
+
+    return { logs, success: true };
+};
+
 const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onComplete, onReboot, partitions, mountOps, fsChangeOptions, targetPartition, odinFiles, filesystem, setFilesystem, installOptions }) => {
     const [logs, setLogs] = useState<string[]>(['Initiating process...']);
     const [isComplete, setIsComplete] = useState(false);
@@ -702,6 +751,11 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
             success = result.success;
             // Make this process very long as requested
             intervalDuration = 90000 / logLines.length; // ~90 seconds total
+        } else if (actionType === 'bypass-ldu') {
+            const result = generateBypassLduLogs();
+            logLines = result.logs;
+            success = result.success;
+            intervalDuration = 30000 / logLines.length; // ~30 seconds total
         }
         else {
             logLines = generateWipeLogs();
@@ -911,6 +965,7 @@ const TerminalView: React.FC<TerminalViewProps> = ({ actionType, fileName, onCom
         if (actionType === 'change-fs') return 'File System Operation';
         if (actionType === 'magisk-patch') return 'Patching Boot Image';
         if (actionType === 'erase-frp') return 'Erasing FRP Lock';
+        if (actionType === 'bypass-ldu') return 'Bypassing LDU Lock';
         if (actionType === 'corrupt-partitions') return 'Corrupting Partitions';
         if (!actionType) return 'Terminal';
         return 'Processing';
